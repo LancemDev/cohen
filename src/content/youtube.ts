@@ -104,8 +104,8 @@ async function runDeepScan(): Promise<void> {
   applyVerdictActions(response.verdict);
 }
 
-async function overrideVerdict(label: 'human' | 'ai' | 'uncertain'): Promise<void> {
-  if (!currentVideoId) return;
+async function overrideVerdict(label: 'human' | 'ai' | 'uncertain' | 'unverified'): Promise<void> {
+  if (!currentVideoId || label === 'unverified') return;
   const response = await sendMessage<{ ok: boolean; verdict?: Verdict }>(
     { type: 'OVERRIDE_VERDICT', videoId: currentVideoId, label } as BackgroundMessage,
   );
