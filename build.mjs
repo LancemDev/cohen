@@ -35,6 +35,7 @@ async function main() {
     },
     {
       ...shared,
+      format: 'iife',
       entryPoints: ['src/content/youtube.ts'],
       outfile: path.join(outdir, 'content/youtube.js'),
     },
