@@ -24,6 +24,14 @@ async function init(): Promise<void> {
   document.addEventListener('yt-navigate-finish', () => void onNavigation());
   document.addEventListener('yt-page-data-updated', () => void onNavigation());
   window.addEventListener('popstate', () => void onNavigation());
+  chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+    if (message?.type === 'COHEN_DEEP_SCAN') {
+      void runDeepScan();
+      sendResponse({ ok: true });
+      return true;
+    }
+    return false;
+  });
   void onNavigation();
 }
 
