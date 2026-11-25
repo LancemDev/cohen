@@ -27,5 +27,13 @@
     "typecheck": "tsc --noEmit",
     "check": "npm run typecheck && npm run build",
     "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "firebase": "^13.4.0"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.3.8",
+    "esbuild": "^0.28.2",
+    "typescript": "^7.0.2"
   }
 }
