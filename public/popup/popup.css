@@ -1,0 +1,52 @@
+:root {
+  color-scheme: dark;
+  --bg: #0b1220;
+  --card: #121c2f;
+  --border: #24324d;
+  --text: #f8fafc;
+  --muted: #94a3b8;
+  --accent: #2dd4bf;
+  --danger: #f87171;
+  --warn: #fbbf24;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  width: 360px;
+  background: linear-gradient(180deg, #0b1220 0%, #111827 100%);
+  color: var(--text);
+  font: 13px/1.4 Inter, ui-sans-serif, system-ui, sans-serif;
+}
+.app { padding: 14px; display: grid; gap: 12px; }
+.hero { display: flex; align-items: start; justify-content: space-between; gap: 12px; }
+.eyebrow { margin: 0; color: var(--accent); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
+h1 { margin: 2px 0 0; font-size: 20px; line-height: 1.1; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 12px; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 0; }
+.label { color: #e2e8f0; font-size: 12px; }
+.pill { font-size: 11px; padding: 3px 8px; border-radius: 999px; background: #24324d; color: #e2e8f0; }
+.pill.human { background: rgba(52,211,153,.15); color: #86efac; }
+.pill.ai { background: rgba(248,113,113,.15); color: #fca5a5; }
+.pill.uncertain { background: rgba(251,191,36,.15); color: #fde68a; }
+.title { margin: 8px 0 4px; font-size: 13px; font-weight: 600; }
+.muted, .status { color: var(--muted); font-size: 11px; margin: 0; }
+.reasons { margin: 8px 0 0; padding-left: 16px; color: #cbd5e1; font-size: 11px; display: grid; gap: 4px; }
+.actions { display: grid; gap: 8px; }
+.btn {
+  width: 100%; border: 1px solid var(--border); background: #18243a; color: var(--text);
+  padding: 9px 10px; border-radius: 10px; font: inherit; cursor: pointer;
+}
+.btn:hover { background: #22314d; }
+.btn.primary { border-color: rgba(45,212,191,.4); color: #ccfbf1; }
+.btn:disabled { opacity: .5; cursor: default; }
+.switch { position: relative; width: 44px; height: 26px; flex: 0 0 auto; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.switch span {
+  position: absolute; inset: 0; cursor: pointer; background: #334155; border-radius: 999px; transition: .2s;
+}
+.switch span::before {
+  content: ""; position: absolute; width: 20px; height: 20px; left: 3px; top: 3px; background: white; border-radius: 50%; transition: .2s;
+}
+.switch input:checked + span { background: #0f766e; }
+.switch input:checked + span::before { transform: translateX(18px); }
+input[type="checkbox"] { width: 16px; height: 16px; accent-color: #14b8a6; }
