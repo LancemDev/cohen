@@ -1,5 +1,5 @@
-import { DEFAULT_SETTINGS, type Settings, type Verdict, type VerdictLabel } from './types';
-import { log, mergeSettings } from './core';
+import { DEFAULT_SETTINGS, type Settings, type Verdict, type VerdictLabel } from '../utils/types';
+import { log, mergeSettings } from '../utils/core';
 
 const KEYS = {
   settings: 'settings',
@@ -67,7 +67,7 @@ export async function overrideVerdict(
         label: 'Manual override',
         detail: `User set verdict to ${label}`,
         weight: label === 'ai' ? 1 : label === 'human' ? -1 : 0,
-        source: 'user',
+        source: 'user' as const,
       },
       ...existing.evidence,
     ].slice(0, 12),
