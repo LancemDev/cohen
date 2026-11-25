@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cohen Settings</title>
+    <link rel="stylesheet" href="./options.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header>
+        <p class="eyebrow">Cohen</p>
+        <h1>Settings</h1>
+        <p class="muted">Tune how Cohen classifies and handles music on YouTube.</p>
+      </header>
+
+      <section class="card">
+        <h2>Behavior</h2>
+        <label class="row"><span>Enable Cohen</span><input id="enabled" type="checkbox" /></label>
+        <label class="row"><span>Show badge on player</span><input id="showBadge" type="checkbox" /></label>
+        <label class="row"><span>Auto-mute likely AI tracks</span><input id="autoMuteAi" type="checkbox" /></label>
+        <label class="row"><span>Auto-skip likely AI tracks</span><input id="autoSkipAi" type="checkbox" /></label>
+      </section>
+
+      <section class="card">
+        <h2>Detection</h2>
+        <label class="row"><span>AI score threshold</span><input id="aiThreshold" type="number" min="0" max="100" /></label>
+        <label class="row"><span>Uncertain score threshold</span><input id="uncertainThreshold" type="number" min="0" max="100" /></label>
+        <label class="row"><span>Cloud escalation</span><input id="cloudEscalation" type="checkbox" /></label>
+        <label class="row"><span>Cloud escalation min confidence</span><input id="cloudEscalationMinConfidence" type="number" min="0" max="1" step="0.05" /></label>
+        <label class="row"><span>Cache TTL (hours)</span><input id="cacheTtlHours" type="number" min="1" max="8760" /></label>
+        <p class="muted small">Cloud escalation sends a short audio clip to the configured cloud model only when enabled. On-device inference stays local.</p>
+      </section>
+
+      <section class="card">
+        <h2>Maintenance</h2>
+        <label class="row"><span>Debug logging</span><input id="debugLogging" type="checkbox" /></label>
+        <div class="actions">
+          <button id="save" class="btn primary">Save settings</button>
+          <button id="clear-cache" class="btn">Clear verdict cache</button>
+        </div>
+        <p id="status" class="muted small"></p>
+      </section>
+    </main>
+    <script type="module" src="./options.js"></script>
+  </body>
+</html>
