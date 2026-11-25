@@ -1,0 +1,114 @@
+.cohen-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 1000;
+  width: min(320px, calc(100% - 24px));
+  color: #f8fafc;
+  background: rgba(15, 23, 42, 0.88);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+  backdrop-filter: blur(10px);
+  overflow: hidden;
+}
+
+.cohen-badge[data-label="human"] { border-color: rgba(52, 211, 153, 0.45); }
+.cohen-badge[data-label="ai"] { border-color: rgba(248, 113, 113, 0.55); }
+.cohen-badge[data-label="uncertain"] { border-color: rgba(251, 191, 36, 0.5); }
+.cohen-badge[data-label="unverified"] { border-color: rgba(148, 163, 184, 0.35); }
+
+.cohen-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.cohen-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #94a3b8;
+  flex: 0 0 auto;
+}
+.cohen-badge[data-label="human"] .cohen-dot { background: #34d399; }
+.cohen-badge[data-label="ai"] .cohen-dot { background: #f87171; }
+.cohen-badge[data-label="uncertain"] .cohen-dot { background: #fbbf24; }
+
+.cohen-title {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.cohen-sub {
+  font-size: 11px;
+  color: #cbd5e1;
+  line-height: 1.2;
+}
+
+.cohen-spacer { flex: 1; }
+
+.cohen-pill {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.18);
+  color: #e2e8f0;
+  white-space: nowrap;
+}
+
+.cohen-body {
+  display: none;
+  padding: 0 12px 12px;
+  border-top: 1px solid rgba(148, 163, 184, 0.15);
+}
+
+.cohen-badge[data-open="true"] .cohen-body { display: block; }
+
+.cohen-summary {
+  font-size: 12px;
+  margin: 10px 0 8px;
+  color: #f1f5f9;
+}
+
+.cohen-reasons {
+  margin: 0;
+  padding-left: 16px;
+  font-size: 11px;
+  color: #cbd5e1;
+  display: grid;
+  gap: 4px;
+}
+
+.cohen-meta {
+  margin-top: 8px;
+  font-size: 10px;
+  color: #94a3b8;
+}
+
+.cohen-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.cohen-btn {
+  appearance: none;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: rgba(30, 41, 59, 0.8);
+  color: #e2e8f0;
+  font-size: 11px;
+  padding: 5px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.cohen-btn:hover { background: rgba(51, 65, 85, 0.95); }
+.cohen-btn:disabled { opacity: 0.5; cursor: default; }
+.cohen-btn.primary { border-color: rgba(45, 212, 191, 0.4); color: #ccfbf1; }
+.cohen-btn.danger { border-color: rgba(248, 113, 113, 0.35); color: #fecaca; }
