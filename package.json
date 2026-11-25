@@ -1,0 +1,31 @@
+{
+  "name": "cohen",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Human music, verified. A Chrome extension that filters AI-generated music on YouTube.",
+  "license": "Apache-2.0",
+  "author": "LancemDev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LancemDev/cohen.git"
+  },
+  "keywords": [
+    "chrome-extension",
+    "ai-music",
+    "youtube",
+    "gemini-nano",
+    "firebase-ai-logic",
+    "on-device-ai"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "watch": "node build.mjs --watch",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck && npm run build",
+    "clean": "rm -rf dist"
+  }
+}
