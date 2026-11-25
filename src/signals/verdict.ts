@@ -27,16 +27,17 @@ export function buildHeuristicVerdict(
     .slice(0, 5)
     .map((e) => e.detail);
 
-  if (reasons.length === 0) {
+  const noEvidence = reasons.length === 0;
+  if (noEvidence) {
     reasons.push('No strong AI-music signals found in metadata; treating as unverified rather than certain.');
   }
 
   return {
     videoId: metadata.videoId,
-    label: reasons.length === 0 ? 'unverified' : label,
+    label: noEvidence ? 'unverified' : label,
     aiScore: Math.round(score),
     confidence,
-    summary: summaryFor(label, score, reasons.length === 0),
+    summary: summaryFor(label, score, noEvidence),
     reasons,
     evidence,
     source: 'heuristic',

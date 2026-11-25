@@ -100,6 +100,12 @@ export interface DeepScanRequest {
   tabId: number;
 }
 
+export interface DeepScanWithMetadataRequest {
+  type: 'DEEP_SCAN_WITH_METADATA';
+  metadata: TrackMetadata;
+  tabId?: number;
+}
+
 export interface VerdictResponse {
   type: 'VERDICT';
   verdict: Verdict;
@@ -113,6 +119,7 @@ export interface SettingsResponse {
 export type BackgroundMessage =
   | ClassificationRequest
   | DeepScanRequest
+  | DeepScanWithMetadataRequest
   | { type: 'GET_VERDICT'; videoId: string }
   | { type: 'GET_SETTINGS' }
   | { type: 'SET_SETTINGS'; settings: Partial<Settings> }
@@ -122,8 +129,15 @@ export type BackgroundMessage =
   | { type: 'PING' };
 
 export type OffscreenMessage =
-  | { type: 'OFFSCREEN_CLASSIFY'; metadata: TrackMetadata; audioFeatures?: AudioFeatures; settings: Settings }
-  | { type: 'OFFSCREEN_CAPTURE_AUDIO'; tabId: number; durationMs: number }
+  | {
+      type: 'OFFSCREEN_CLASSIFY';
+      metadata: TrackMetadata;
+      audioFeatures?: AudioFeatures;
+      audioBase64?: string;
+      audioMimeType?: string;
+      settings: Settings;
+    }
+  | { type: 'OFFSCREEN_CAPTURE_AUDIO'; streamId: string; durationMs: number }
   | { type: 'OFFSCREEN_PING' };
 
 export interface CaptureResult {
