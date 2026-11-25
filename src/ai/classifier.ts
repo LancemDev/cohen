@@ -64,23 +64,21 @@ export async function classifyTrack(args: {
       promptOptions: {
         responseConstraint: VERDICT_SCHEMA,
       },
-      createOptions: {
-        temperature: 0.1,
-        topK: 3,
-      },
     },
   });
 
   const prompt = buildPrompt(metadata, audioFeatures, Boolean(audio));
-  const parts: Part[] = [{ text: prompt }];
+  const parts: Part[] = [{ type: 'text', text: prompt }];
   if (audio) {
     parts.push({
+      type: 'inlineData',
       inlineData: {
         data: audio.base64,
         mimeType: audio.mimeType,
       },
     });
     parts.push({
+      type: 'text',
       text: 'An audio clip from the track is attached. Use it only as supporting evidence. If the audio is inconclusive, say so.',
     });
   }
@@ -225,7 +223,6 @@ export async function createClassificationModel(settings: Settings): Promise<Gen
     },
     onDeviceParams: {
       promptOptions: { responseConstraint: VERDICT_SCHEMA },
-      createOptions: { temperature: 0.1, topK: 3 },
     },
   });
 }
