@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cohen</title>
+    <link rel="stylesheet" href="./popup.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">Cohen</p>
+          <h1>Human music, verified.</h1>
+        </div>
+        <label class="switch" title="Enable Cohen">
+          <input id="enabled" type="checkbox" />
+          <span></span>
+        </label>
+      </header>
+
+      <section class="card" id="status-card">
+        <div class="row">
+          <span class="label">Current track</span>
+          <span id="track-label" class="pill">No YouTube track</span>
+        </div>
+        <p id="track-title" class="title">Open a YouTube video to classify it.</p>
+        <p id="track-summary" class="muted"></p>
+        <ul id="track-reasons" class="reasons"></ul>
+      </section>
+
+      <section class="card">
+        <div class="row"><span class="label">Auto-mute AI</span><input id="autoMuteAi" type="checkbox" /></div>
+        <div class="row"><span class="label">Auto-skip AI</span><input id="autoSkipAi" type="checkbox" /></div>
+        <div class="row"><span class="label">Cloud escalation</span><input id="cloudEscalation" type="checkbox" /></div>
+      </section>
+
+      <section class="card actions">
+        <button id="deep-scan" class="btn primary">Deep scan current track</button>
+        <button id="open-options" class="btn">Settings</button>
+      </section>
+
+      <p id="status" class="status"></p>
+    </main>
+    <script type="module" src="./popup.js"></script>
+  </body>
+</html>
