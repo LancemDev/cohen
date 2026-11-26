@@ -68,7 +68,12 @@ async function classify(message: ClassifyMessage) {
         : undefined,
     settings: message.settings,
   });
-  log.debug('offscreen classify result', message.metadata.videoId, result.label, result.source, result.error);
+  log.debug(
+    'offscreen classify result',
+    message.metadata.videoId,
+    result.verdict?.label,
+    result.verdict?.source,
+  );
   return { ok: true, ...result };
 }
 
