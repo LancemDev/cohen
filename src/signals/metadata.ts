@@ -39,7 +39,7 @@ const AI_DESCRIPTION_PATTERNS: Array<[RegExp, string, number]> = [
   [/\b(created|generated|made|produced)\s+(with|using|by)\s+(suno|udio|ai|artificial intelligence)\b/i, 'Description discloses AI generation', 0.55],
   [/\bthis\s+(song|track|music)\s+(was|is)\s+(created|generated|made)\s+(with|using)\s+ai\b/i, 'Description discloses AI creation', 0.55],
   [/\bai[- ]generated\s+(music|song|track|audio)\b/i, 'Description labels audio as AI-generated', 0.55],
-  [/\b#suno\b|\b#udio\b|\b#aimusic\b|\b#aigeneratedmusic\b/i, 'Description contains AI-music hashtags', 0.3],
+  [/#suno\b|#udio\b|#aimusic\b|#aigeneratedmusic\b/i, 'Description contains AI-music hashtags', 0.3],
 ];
 
 const HUMAN_DESCRIPTION_PATTERNS: Array<[RegExp, string, number]> = [
