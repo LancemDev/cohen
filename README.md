@@ -90,10 +90,23 @@ Load the unpacked extension:
 
 For on-device inference, enable `chrome://flags/#prompt-api-for-gemini-nano-multimodal-input` and let Chrome download the model.
 
+### Viewing logs
+
+1. Open Cohen options and enable **Debug logging**.
+2. Reload the extension and refresh the YouTube tab.
+3. Open the relevant DevTools console and filter for `[cohen]`:
+   - **YouTube badge/content script**: YouTube tab → DevTools → Console.
+   - **Service worker/orchestration**: `chrome://extensions` → Cohen → **Details** → **Inspect views: service worker**.
+   - **Popup**: open the popup → right-click it → **Inspect** → Console.
+   - **Options page**: open options → DevTools → Console.
+   - **Offscreen model/audio work**: if Chrome lists it, use **Inspect views** for the offscreen document; otherwise open `chrome-extension://<extension-id>/offscreen/offscreen.html` in a tab with DevTools.
+
+Automatic classification times out after 30 seconds and deep scans after 120 seconds, so the badge should not stay in a loading state indefinitely.
+
 ### Firebase setup
 
 1. Create a Firebase project and enable **AI Logic** with the Gemini Developer API.
-2. Register a web app and copy its config into `src/config/firebase.ts`.
+2. Register a web app and copy its config into the gitignored `src/config/firebase.local.ts` (copy `src/config/firebase.local.example.ts` if the file is missing).
 3. Enforce App Check for AI Logic.
 4. For local development, use the App Check debug provider and register the debug token in the Firebase console.
 
