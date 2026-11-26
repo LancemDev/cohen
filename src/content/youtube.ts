@@ -94,7 +94,7 @@ async function onNavigation(): Promise<void> {
   currentMetadata = metadata;
 
   setBadgeLoading('Classifying track…');
-  log.debug('classification started', videoId, metadata.title);
+  log.info('classification started', videoId, metadata.title);
   try {
     const response = await withTimeout(
       sendMessage<{ ok: boolean; verdict?: Verdict; error?: string }>({
@@ -106,7 +106,7 @@ async function onNavigation(): Promise<void> {
     );
 
     if (token !== navigationToken || metadata.videoId !== currentVideoId) return;
-    log.debug('classification response', videoId, response?.ok, response?.verdict?.label, response?.error);
+    log.info('classification response', videoId, response?.ok, response?.verdict?.label, response?.error);
     if (!response?.ok || !response.verdict) {
       setBadgeError(response?.error || 'Classification failed');
       return;
@@ -118,7 +118,7 @@ async function onNavigation(): Promise<void> {
   } catch (err) {
     if (token !== navigationToken || metadata.videoId !== currentVideoId) return;
     const message = err instanceof Error ? err.message : String(err);
-    log.warn('classification failed', videoId, message);
+    log.error('classification failed', videoId, message);
     setBadgeError(message.includes('timed out') ? 'Classification timed out. Try again.' : message);
   }
 }
@@ -138,7 +138,7 @@ async function runDeepScan(): Promise<void> {
   setBadgeLoading('Capturing audio for deep scan…');
   try {
     settings = settings ?? (await requestSettings());
-    log.debug('deep scan started', scannedVideoId);
+    log.info('deep scan started', scannedVideoId);
     const response = await withTimeout(
       sendMessage<{ ok: boolean; verdict?: Verdict; error?: string }>({
         type: 'DEEP_SCAN_WITH_METADATA',
@@ -148,7 +148,7 @@ async function runDeepScan(): Promise<void> {
       'Deep scan',
     );
     if (scanToken !== navigationToken || scannedVideoId !== currentVideoId) return;
-    log.debug('deep scan response', scannedVideoId, response?.ok, response?.verdict?.label, response?.error);
+    log.info('deep scan response', scannedVideoId, response?.ok, response?.verdict?.label, response?.error);
     if (!response?.ok || !response.verdict) {
       setBadgeError(response?.error || 'Deep scan failed');
       return;
@@ -158,7 +158,7 @@ async function runDeepScan(): Promise<void> {
     applyVerdictActions(response.verdict);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    log.warn('deep scan failed', scannedVideoId, message);
+    log.error('deep scan failed', scannedVideoId, message);
     setBadgeError(message.includes('timed out') ? 'Deep scan timed out. Try again.' : message);
   } finally {
     deepScanInFlight = false;
