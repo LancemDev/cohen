@@ -1,5 +1,5 @@
 import { build, context } from 'esbuild';
-import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { access, cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 const watch = process.argv.includes('--watch');
@@ -13,6 +13,17 @@ const shared = {
   logLevel: 'info',
 };
 
+async function ensureLocalFirebaseConfig() {
+  const local = 'src/config/firebase.local.ts';
+  const example = 'src/config/firebase.local.example.ts';
+  try {
+    await access(local);
+  } catch {
+    await cp(example, local);
+    console.log('Created src/config/firebase.local.ts from example');
+  }
+}
+
 async function copyStatic() {
   await mkdir(outdir, { recursive: true });
   await mkdir(path.join(outdir, 'icons'), { recursive: true });
@@ -24,6 +35,7 @@ async function copyStatic() {
 }
 
 async function main() {
+  await ensureLocalFirebaseConfig();
   await rm(outdir, { recursive: true, force: true });
   await copyStatic();
 

@@ -9,3 +9,6 @@ coverage/
 .DS_Store
 .vscode/
 .idea/
+
+# Local Firebase config (contains project credentials)
+src/config/firebase.local.ts
