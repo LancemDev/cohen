@@ -24,6 +24,9 @@ interface CaptureMessage {
 type OffscreenRequest = ClassifyMessage | CaptureMessage | { type: 'OFFSCREEN_PING' };
 
 chrome.runtime.onMessage.addListener((message: OffscreenRequest, _sender, sendResponse) => {
+  const type = (message as { type?: string } | undefined)?.type;
+  if (!type?.startsWith('OFFSCREEN_')) return false;
+
   handle(message)
     .then(sendResponse)
     .catch((err) => {
@@ -42,7 +45,7 @@ async function handle(message: OffscreenRequest): Promise<unknown> {
     case 'OFFSCREEN_CLASSIFY':
       return classify(message);
     default:
-      return { ok: false, error: 'Unknown offscreen message' };
+      return { ok: false, error: `Unknown offscreen message: ${String((message as { type?: string }).type ?? 'unknown')}` };
   }
 }
 
