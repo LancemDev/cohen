@@ -156,7 +156,7 @@ function trustedVerdict(metadata: TrackMetadata, reason: string): Verdict {
     summary: 'Trusted by your channel allowlist.',
     reasons: [reason],
     evidence: [{ id: 'trust', label: 'User trust', detail: reason, weight: -1, source: 'user' }],
-    source: 'heuristic',
+    source: 'user',
     analyzedAt: Date.now(),
     audioAnalyzed: false,
   };
@@ -171,7 +171,7 @@ function blockedVerdict(metadata: TrackMetadata, reason: string): Verdict {
     summary: 'Blocked by your channel blocklist.',
     reasons: [reason],
     evidence: [{ id: 'block', label: 'User block', detail: reason, weight: 1, source: 'user' }],
-    source: 'heuristic',
+    source: 'user',
     analyzedAt: Date.now(),
     audioAnalyzed: false,
   };

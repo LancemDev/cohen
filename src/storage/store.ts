@@ -71,7 +71,7 @@ export async function overrideVerdict(
       },
       ...existing.evidence,
     ].slice(0, 12),
-    source: 'heuristic',
+    source: 'user',
     analyzedAt: Date.now(),
   };
   cache[videoId] = next;

@@ -1,6 +1,6 @@
 export type VerdictLabel = 'human' | 'ai' | 'uncertain' | 'unverified';
 
-export type VerdictSource = 'heuristic' | 'on-device' | 'cloud' | 'hybrid';
+export type VerdictSource = 'heuristic' | 'on-device' | 'cloud' | 'hybrid' | 'user';
 
 export interface SignalEvidence {
   id: string;

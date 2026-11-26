@@ -52,7 +52,7 @@ onBackgroundMessage(async (message: BackgroundMessage, sender) => {
       return { ok: true };
     case 'GET_VERDICT': {
       const verdict = await getVerdict(message.videoId);
-      return { ok: true, verdict };
+      return { ok: true, verdict: verdict && isFresh(verdict, settings) ? verdict : null };
     }
     case 'OVERRIDE_VERDICT': {
       const verdict = await overrideVerdict(message.videoId, message.label);
