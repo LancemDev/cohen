@@ -48,6 +48,17 @@
         </div>
         <p id="status" class="muted small"></p>
       </section>
+
+      <section class="card">
+        <h2>Diagnostics</h2>
+        <p class="muted small">Recent Cohen logs are stored locally in this browser. Refresh after using the extension.</p>
+        <div class="actions">
+          <button id="refresh-logs" class="btn">Refresh logs</button>
+          <button id="copy-logs" class="btn">Copy logs</button>
+          <button id="clear-logs" class="btn">Clear logs</button>
+        </div>
+        <pre id="log-output" class="log-output">No logs yet.</pre>
+      </section>
     </main>
     <script type="module" src="./options.js"></script>
   </body>
