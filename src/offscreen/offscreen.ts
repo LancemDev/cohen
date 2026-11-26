@@ -2,7 +2,7 @@ import { classifyTrack } from '../ai/classifier';
 import { isFirebaseConfigured } from '../config/firebase';
 import { decodeAudioBlob, extractAudioFeatures } from '../audio/features';
 import { encodeWav } from '../audio/wav';
-import { log } from '../utils/core';
+import { log, setDebugLogging } from '../utils/core';
 import type { CaptureResult, Settings, TrackMetadata } from '../utils/types';
 
 interface ClassifyMessage {
@@ -50,6 +50,12 @@ async function handle(message: OffscreenRequest): Promise<unknown> {
 }
 
 async function classify(message: ClassifyMessage) {
+  setDebugLogging(message.settings.debugLogging);
+  log.debug('offscreen classify', message.metadata.videoId, {
+    cloud: message.settings.cloudEscalation,
+    audio: Boolean(message.audioBase64),
+    features: Boolean(message.audioFeatures),
+  });
   if (!isFirebaseConfigured()) {
     return { ok: false, error: 'Firebase not configured' };
   }
@@ -62,6 +68,7 @@ async function classify(message: ClassifyMessage) {
         : undefined,
     settings: message.settings,
   });
+  log.debug('offscreen classify result', message.metadata.videoId, result.label, result.source, result.error);
   return { ok: true, ...result };
 }
 
