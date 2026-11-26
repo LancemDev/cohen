@@ -23,7 +23,7 @@ Cohen is a personal filter, not a judge. It shows its evidence, exposes its conf
 - Shows a compact badge on the player with the score and the reasons behind it.
 - Can mute or skip tracks classified as AI.
 - Deep-scans a track's audio on demand, with a short local clip and an optional cloud escalation.
-- Remembers verdicts and lets you mark a channel or track as trusted.
+- Remembers verdicts and lets you mark a channel as trusted or blocked, with channel rules managed in settings.
 - Works offline for the on-device path once the model is available.
 
 ## How it works
@@ -66,7 +66,7 @@ These features are weak evidence on their own. They exist to give the model meas
 - Automatic screening uses page metadata only.
 - Audio is captured only when you explicitly start a deep scan.
 - On-device inference sends nothing off the machine.
-- Cloud escalation is opt-in and only uploads the short clip being analyzed.
+- Cloud escalation is opt-in. When it is enabled, metadata can fall back to the cloud and deep scans can upload the short WAV clip being analyzed.
 - Verdicts and settings are stored in `chrome.storage.local`; nothing is synced by default.
 
 ## Status
@@ -97,19 +97,21 @@ For on-device inference, enable `chrome://flags/#prompt-api-for-gemini-nano-mult
 3. Enforce App Check for AI Logic.
 4. For local development, use the App Check debug provider and register the debug token in the Firebase console.
 
-Cloud features stay disabled until a config is present. Cohen degrades to on-device and heuristic classification rather than failing closed.
+Cloud features stay disabled until a config is present. Cohen degrades to heuristic classification rather than failing closed.
+
+Production App Check from a `chrome-extension://` page needs a supported attestation strategy. The web reCAPTCHA provider loads a remote script that MV3's extension CSP blocks by default, so use a debug token for local development and validate your production provider before shipping.
 
 ## Configuration
 
 Settings live in the extension's options page:
 
 - enable or disable screening
-- sensitivity threshold
+- sensitivity thresholds
 - automatic mute and skip
-- audio deep-scan behavior
-- cloud escalation
+- cloud escalation and minimum AI confidence
 - cache lifetime
 - debug logging
+- trusted and blocked channel rules
 
 ## Limitations
 
@@ -117,6 +119,7 @@ Settings live in the extension's options page:
 - Heavily produced human music can look synthetic; well-produced AI music can look human.
 - YouTube's DOM changes; selectors may need maintenance.
 - On-device inference requires supported hardware and a downloaded model.
+- Tab capture requires an explicit extension invocation on the tab (opening the popup or using the badge is the intended flow).
 - The extension does not download, fingerprint, or redistribute copyrighted audio.
 
 ## License
