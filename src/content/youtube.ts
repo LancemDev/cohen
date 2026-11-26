@@ -15,7 +15,13 @@ async function init(): Promise<void> {
   settings = await requestSettings();
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area === 'local' && changes.settings?.newValue) {
+      const previous = settings;
       settings = changes.settings.newValue as Settings;
+      if (!previous?.enabled && settings.enabled) {
+        currentVideoId = null;
+        void onNavigation();
+        return;
+      }
       if (currentVerdict && settings) setBadgeVerdict(currentVerdict, settings);
       applyVerdictActions(currentVerdict);
       updateBadgeVisibility();
