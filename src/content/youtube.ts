@@ -106,7 +106,10 @@ async function onNavigation(): Promise<void> {
   applyVerdictActions(response.verdict);
 }
 
+let deepScanInFlight = false;
+
 async function runDeepScan(): Promise<void> {
+  if (deepScanInFlight) return;
   if (!currentMetadata || !currentVideoId) {
     setBadgeError('Wait for the track to finish loading, then try again.');
     return;
@@ -114,27 +117,35 @@ async function runDeepScan(): Promise<void> {
   const metadata = currentMetadata;
   const scannedVideoId = currentVideoId;
   const scanToken = navigationToken;
-  settings = settings ?? (await requestSettings());
+  deepScanInFlight = true;
   setBadgeLoading('Capturing audio for deep scan…');
-  const response = await sendMessage<{ ok: boolean; verdict?: Verdict; error?: string }>({
-    type: 'DEEP_SCAN_WITH_METADATA',
-    metadata,
-  });
-  if (scanToken !== navigationToken || scannedVideoId !== currentVideoId) return;
-  if (!response?.ok || !response.verdict) {
-    setBadgeError(response?.error || 'Deep scan failed');
-    return;
+  try {
+    settings = settings ?? (await requestSettings());
+    const response = await sendMessage<{ ok: boolean; verdict?: Verdict; error?: string }>({
+      type: 'DEEP_SCAN_WITH_METADATA',
+      metadata,
+    });
+    if (scanToken !== navigationToken || scannedVideoId !== currentVideoId) return;
+    if (!response?.ok || !response.verdict) {
+      setBadgeError(response?.error || 'Deep scan failed');
+      return;
+    }
+    currentVerdict = response.verdict;
+    if (settings) setBadgeVerdict(response.verdict, settings);
+    applyVerdictActions(response.verdict);
+  } finally {
+    deepScanInFlight = false;
   }
-  currentVerdict = response.verdict;
-  if (settings) setBadgeVerdict(response.verdict, settings);
-  applyVerdictActions(response.verdict);
 }
 
 async function overrideVerdict(label: 'human' | 'ai' | 'uncertain' | 'unverified'): Promise<void> {
   if (!currentVideoId || label === 'unverified') return;
+  const videoId = currentVideoId;
+  const token = navigationToken;
   const response = await sendMessage<{ ok: boolean; verdict?: Verdict }>(
-    { type: 'OVERRIDE_VERDICT', videoId: currentVideoId, label } as BackgroundMessage,
+    { type: 'OVERRIDE_VERDICT', videoId, label } as BackgroundMessage,
   );
+  if (token !== navigationToken || videoId !== currentVideoId) return;
   if (response?.ok && response.verdict) {
     currentVerdict = response.verdict;
     if (settings) setBadgeVerdict(response.verdict, settings);
@@ -158,8 +169,10 @@ function applyVerdictActions(verdict: Verdict | null): void {
 
   const video = document.querySelector<HTMLVideoElement>('video.html5-main-video, video');
   if (!video) return;
+  // Do not mute or skip YouTube ads; only act on the requested track.
+  if (document.querySelector('.ad-showing')) return;
 
-  const shouldAct = verdict.label === 'ai' && verdict.aiScore >= settings.aiThreshold;
+  const shouldAct = verdict.label === 'ai';
   if (shouldAct && settings.autoMuteAi) {
     if (!video.muted) {
       video.muted = true;
