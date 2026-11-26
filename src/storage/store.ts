@@ -105,6 +105,8 @@ export async function setChannelTrust(
   if (trusted === null) delete trust[channelId];
   else trust[channelId] = trusted ? 'trusted' : 'blocked';
   await chrome.storage.local.set({ [KEYS.channelTrust]: trust });
+  // Trust changes must not be masked by stale verdicts for that channel.
+  await clearVerdictCache();
   log.debug('channel trust updated', channelId, trust[channelId]);
   return trust;
 }
