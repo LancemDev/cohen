@@ -27,14 +27,22 @@ chrome.runtime.onMessage.addListener((message: OffscreenRequest, _sender, sendRe
   const type = (message as { type?: string } | undefined)?.type;
   if (!type?.startsWith('OFFSCREEN_')) return false;
 
+  setOffscreenStatus(`Handling ${type}`);
+  appendOffscreenActivity(`received ${type}`);
   handle(message)
-    .then(sendResponse)
+    .then((result) => {
+      appendOffscreenActivity(`completed ${type}`);
+      sendResponse(result);
+    })
     .catch((err) => {
       log.error('offscreen error', err);
+      appendOffscreenActivity(`failed ${type}: ${err instanceof Error ? err.message : String(err)}`);
       sendResponse({ ok: false, error: err instanceof Error ? err.message : String(err) });
     });
   return true;
 });
+
+setOffscreenStatus('Ready — waiting for classification or capture requests');
 
 async function handle(message: OffscreenRequest): Promise<unknown> {
   switch (message.type) {
@@ -163,4 +171,18 @@ function blobToBase64(blob: Blob): Promise<string> {
     };
     reader.readAsDataURL(blob);
   });
+}
+
+function setOffscreenStatus(text: string): void {
+  const el = document.getElementById('cohen-offscreen-status');
+  if (el) el.textContent = text;
+}
+
+function appendOffscreenActivity(text: string): void {
+  const el = document.getElementById('cohen-offscreen-log');
+  if (!el) return;
+  const line = `[${new Date().toLocaleTimeString()}] ${text}`;
+  const current = el.textContent && el.textContent !== 'No activity yet.' ? el.textContent : '';
+  el.textContent = [...current.split('\n').filter(Boolean), line].slice(-40).join('\n');
+  el.scrollTop = el.scrollHeight;
 }
