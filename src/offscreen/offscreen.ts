@@ -1,6 +1,7 @@
 import { classifyTrack } from '../ai/classifier';
 import { isFirebaseConfigured } from '../config/firebase';
 import { decodeAudioBlob, extractAudioFeatures } from '../audio/features';
+import { encodeWav } from '../audio/wav';
 import { log } from '../utils/core';
 import type { CaptureResult, Settings, TrackMetadata } from '../utils/types';
 
@@ -78,6 +79,7 @@ async function captureAudio(streamId: string, durationMs: number): Promise<Captu
     audioCtx = new AudioContext();
     const source = audioCtx.createMediaStreamSource(stream);
     source.connect(audioCtx.destination);
+    await audioCtx.resume().catch(() => undefined);
 
     const mimeType = pickMimeType();
     const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
@@ -93,12 +95,13 @@ async function captureAudio(streamId: string, durationMs: number): Promise<Captu
           const blob = new Blob(chunks, { type: recorder.mimeType || mimeType || 'audio/webm' });
           const buffer = await decodeAudioBlob(blob);
           const features = extractAudioFeatures(buffer);
-          const audioBlobBase64 = await blobToBase64(blob);
+          const wav = encodeWav(buffer, { mono: true, maxSeconds: 12 });
+          const audioBlobBase64 = await blobToBase64(wav);
           resolve({
             ok: true,
             features,
             audioBlobBase64,
-            mimeType: blob.type || 'audio/webm',
+            mimeType: 'audio/wav',
           });
         } catch (err) {
           resolve({ ok: false, error: err instanceof Error ? err.message : String(err) });
