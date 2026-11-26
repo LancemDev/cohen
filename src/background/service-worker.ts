@@ -36,6 +36,7 @@ chrome.runtime.onStartup?.addListener(async () => {
 onBackgroundMessage(async (message: BackgroundMessage, sender) => {
   const settings = await getSettings();
   setDebugLogging(settings.debugLogging);
+  log.debug('background message', message.type);
 
   switch (message.type) {
     case 'PING':
@@ -63,6 +64,7 @@ onBackgroundMessage(async (message: BackgroundMessage, sender) => {
       return { ok: true, trust };
     }
     case 'CLASSIFY_TRACK':
+      log.debug('classify request', message.metadata.videoId, message.metadata.title);
       return classifyTrack(message.metadata, settings, message.audioFeatures, message.forceCloud);
     case 'DEEP_SCAN': {
       const tabId = message.tabId || sender.tab?.id;
@@ -72,6 +74,7 @@ onBackgroundMessage(async (message: BackgroundMessage, sender) => {
     case 'DEEP_SCAN_WITH_METADATA': {
       const tabId = message.tabId || sender.tab?.id;
       if (!tabId) return { ok: false, error: 'Missing tabId for deep scan' };
+      log.debug('deep scan request', message.metadata.videoId, tabId);
       return deepScan(message.metadata, tabId, settings);
     }
     default:
@@ -149,6 +152,7 @@ async function classifyTrack(
       };
     }
 
+    log.debug('classify complete', metadata.videoId, verdict.label, verdict.source);
     await putVerdict(verdict, settings.cacheTtlHours);
     return { ok: true, verdict };
   } catch (err) {
@@ -259,6 +263,7 @@ async function deepScan(
       verdict = { ...heuristic, audioAnalyzed: true };
     }
 
+    log.debug('deep scan complete', metadata.videoId, verdict.label, verdict.source);
     await putVerdict(verdict, settings.cacheTtlHours);
     return { ok: true, verdict };
   } catch (err) {
