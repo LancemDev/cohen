@@ -71,3 +71,17 @@ input[type="checkbox"] { width: 18px; height: 18px; accent-color: #14b8a6; }
 .rule .status { font-size: 11px; padding: 2px 7px; border-radius: 999px; text-transform: capitalize; }
 .rule .status.trusted { background: rgba(52,211,153,.15); color: #86efac; }
 .rule .status.blocked { background: rgba(248,113,113,.15); color: #fca5a5; }
+.log-output {
+  max-height: 280px;
+  overflow: auto;
+  margin: 12px 0 0;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  background: rgba(2, 6, 23, 0.55);
+  color: #cbd5e1;
+  font: 11px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+  white-space: pre-wrap;
+  word-break: break-word;
+  backdrop-filter: blur(8px);
+}
