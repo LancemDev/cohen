@@ -3,7 +3,6 @@ import {
   InferenceMode,
   InferenceSource,
   Schema,
-  type GenerativeModel,
   type Part,
 } from 'firebase/ai';
 import { getAIService } from './firebase';
@@ -204,7 +203,9 @@ function extractJson(text: string): string {
 }
 
 function normalizeLabel(label: unknown): VerdictLabel {
-  if (label === 'human' || label === 'ai' || label === 'uncertain') return label;
+  if (typeof label !== 'string') return 'uncertain';
+  const normalized = label.trim().toLowerCase();
+  if (normalized === 'human' || normalized === 'ai' || normalized === 'uncertain') return normalized;
   return 'uncertain';
 }
 
@@ -217,22 +218,4 @@ function summaryFor(label: VerdictLabel, score: number): string {
 function truncate(value: string, max: number): string {
   if (value.length <= max) return value;
   return `${value.slice(0, max - 1)}…`;
-}
-
-export async function createClassificationModel(settings: Settings): Promise<GenerativeModel> {
-  const ai = getAIService();
-  return getGenerativeModel(ai, {
-    mode: InferenceMode.PREFER_ON_DEVICE,
-    inCloudParams: {
-      model: 'gemini-2.5-flash-lite',
-      generationConfig: {
-        responseMimeType: 'application/json',
-        responseSchema: VERDICT_SCHEMA,
-        temperature: 0.1,
-      },
-    },
-    onDeviceParams: {
-      promptOptions: { responseConstraint: VERDICT_SCHEMA },
-    },
-  });
 }
