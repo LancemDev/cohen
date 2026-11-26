@@ -1,20 +1,9 @@
 import type { SignalEvidence, TrackMetadata } from '../utils/types';
-import { normalizeText } from '../utils/core';
-
-interface Pattern {
-  id: string;
-  label: string;
-  weight: number;
-  reason: string;
-  test: (ctx: MatchContext) => boolean;
-}
 
 interface MatchContext {
   title: string;
   channel: string;
   description: string;
-  combined: string;
-  metadata: TrackMetadata;
 }
 
 const AI_TITLE_PATTERNS: Array<[RegExp, string, number]> = [
@@ -53,8 +42,6 @@ export function collectMetadataEvidence(metadata: TrackMetadata): SignalEvidence
     title: metadata.title,
     channel: metadata.channelName,
     description: metadata.description,
-    combined: normalizeText(`${metadata.title} ${metadata.channelName} ${metadata.description}`),
-    metadata,
   };
 
   const evidence: SignalEvidence[] = [];
@@ -77,6 +64,17 @@ export function collectMetadataEvidence(metadata: TrackMetadata): SignalEvidence
 
   if (metadata.keywords.some((k) => /\b(ai music|suno|udio|ai generated)\b/i.test(k))) {
     evidence.push(makeEvidence('keyword-ai', 'Metadata keyword', 'Video keywords include AI-music terms', 0.25));
+  }
+
+  if (metadata.isMusicCategory === false) {
+    evidence.push(
+      makeEvidence(
+        'category-non-music',
+        'Metadata category',
+        'Video is not categorized as music, so AI-music filtering is less relevant.',
+        -0.15,
+      ),
+    );
   }
 
   return dedupeEvidence(evidence);

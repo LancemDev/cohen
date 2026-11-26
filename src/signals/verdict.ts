@@ -22,9 +22,10 @@ export function buildHeuristicVerdict(
   let confidence = confidenceFromEvidence(evidence, audioFeatures);
   let label = labelForScore(score, confidence, settings);
 
-  // An explicit disclosure ("made with Suno", "AI-generated", etc.) is stronger
-  // evidence than a single incidental keyword. Do not bury it under uncertainty.
-  const explicitAiDisclosure = evidence.some((e) => e.source === 'metadata' && e.weight >= 0.55);
+  // An explicit disclosure ("made with Suno", "AI-generated", "AI cover", etc.)
+  // is stronger evidence than a single incidental keyword. Do not bury it under
+  // uncertainty.
+  const explicitAiDisclosure = evidence.some((e) => e.source === 'metadata' && e.weight >= 0.45);
   if (explicitAiDisclosure && score >= settings.uncertainThreshold) {
     confidence = Math.max(confidence, 0.7);
     score = Math.max(score, settings.aiThreshold);
@@ -58,7 +59,7 @@ export function buildHeuristicVerdict(
 export function mergeVerdicts(base: Verdict, model: Verdict, settings: Settings): Verdict {
   // Model verdict carries structured reasoning; heuristics provide hard signals.
   const evidence = dedupe([...base.evidence, ...model.evidence]);
-  const hasStrongMetadataAi = base.evidence.some((e) => e.weight >= 0.5);
+  const hasStrongMetadataAi = base.evidence.some((e) => e.weight >= 0.45);
   const hasStrongMetadataHuman = base.evidence.some((e) => e.weight <= -0.2);
 
   let score = model.aiScore * 0.7 + base.aiScore * 0.3;
