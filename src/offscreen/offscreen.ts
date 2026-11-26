@@ -18,6 +18,7 @@ interface CaptureMessage {
   type: 'OFFSCREEN_CAPTURE_AUDIO';
   streamId: string;
   durationMs: number;
+  includeAudio?: boolean;
 }
 
 type OffscreenRequest = ClassifyMessage | CaptureMessage | { type: 'OFFSCREEN_PING' };
@@ -37,7 +38,7 @@ async function handle(message: OffscreenRequest): Promise<unknown> {
     case 'OFFSCREEN_PING':
       return { ok: true };
     case 'OFFSCREEN_CAPTURE_AUDIO':
-      return captureAudio(message.streamId, message.durationMs);
+      return captureAudio(message.streamId, message.durationMs, message.includeAudio === true);
     case 'OFFSCREEN_CLASSIFY':
       return classify(message);
     default:
@@ -61,7 +62,11 @@ async function classify(message: ClassifyMessage) {
   return { ok: true, ...result };
 }
 
-async function captureAudio(streamId: string, durationMs: number): Promise<CaptureResult> {
+async function captureAudio(
+  streamId: string,
+  durationMs: number,
+  includeAudio: boolean,
+): Promise<CaptureResult> {
   let stream: MediaStream | null = null;
   let audioCtx: AudioContext | null = null;
   try {
@@ -95,6 +100,10 @@ async function captureAudio(streamId: string, durationMs: number): Promise<Captu
           const blob = new Blob(chunks, { type: recorder.mimeType || mimeType || 'audio/webm' });
           const buffer = await decodeAudioBlob(blob);
           const features = extractAudioFeatures(buffer);
+          if (!includeAudio) {
+            resolve({ ok: true, features });
+            return;
+          }
           const wav = encodeWav(buffer, { mono: true, maxSeconds: 12 });
           const audioBlobBase64 = await blobToBase64(wav);
           resolve({

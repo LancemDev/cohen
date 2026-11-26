@@ -1,6 +1,6 @@
 import { buildHeuristicVerdict, mergeVerdicts } from '../signals/verdict';
 import { isFirebaseConfigured } from '../config/firebase';
-import { log, setDebugLogging } from '../utils/core';
+import { log, setDebugLogging, sleep } from '../utils/core';
 import { onBackgroundMessage } from '../utils/messaging';
 import {
   clearVerdictCache,
@@ -158,6 +158,7 @@ async function deepScan(
       type: 'OFFSCREEN_CAPTURE_AUDIO',
       streamId,
       durationMs: 10000,
+      includeAudio: settings.cloudEscalation,
     })) as CaptureResult;
 
     if (!capture.ok || !capture.features) {
@@ -209,15 +210,42 @@ function isFresh(verdict: Verdict, settings: Settings): boolean {
   return ageMs < settings.cacheTtlHours * 60 * 60 * 1000;
 }
 
+let offscreenPromise: Promise<void> | null = null;
+
 async function ensureOffscreen(): Promise<void> {
+  if (offscreenPromise) return offscreenPromise;
+  offscreenPromise = createOrWaitForOffscreen().finally(() => {
+    offscreenPromise = null;
+  });
+  return offscreenPromise;
+}
+
+async function createOrWaitForOffscreen(): Promise<void> {
   const existing = await chrome.runtime.getContexts({
     contextTypes: ['OFFSCREEN_DOCUMENT' as chrome.runtime.ContextType],
     documentUrls: [chrome.runtime.getURL(OFFSCREEN_URL)],
   });
-  if (existing.length > 0) return;
-  await chrome.offscreen.createDocument({
-    url: OFFSCREEN_URL,
-    reasons: [chrome.offscreen.Reason.USER_MEDIA, chrome.offscreen.Reason.AUDIO_PLAYBACK],
-    justification: 'Capture tab audio for analysis and run Firebase AI Logic inference in a document context.',
-  });
+  if (existing.length === 0) {
+    await chrome.offscreen.createDocument({
+      url: OFFSCREEN_URL,
+      reasons: [chrome.offscreen.Reason.USER_MEDIA, chrome.offscreen.Reason.AUDIO_PLAYBACK],
+      justification: 'Capture tab audio for analysis and run Firebase AI Logic inference in a document context.',
+    });
+  }
+
+  // createDocument() resolves before the document script has necessarily
+  // registered its message listener. Wait for a ping so the first classify or
+  // capture request is not lost.
+  const deadline = Date.now() + 3000;
+  while (Date.now() < deadline) {
+    try {
+      const pong = (await chrome.runtime.sendMessage({ type: 'OFFSCREEN_PING' })) as
+        | { ok?: boolean }
+        | undefined;
+      if (pong?.ok) return;
+    } catch {
+      // The offscreen document is still loading.
+    }
+    await sleep(100);
+  }
 }

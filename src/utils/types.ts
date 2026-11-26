@@ -131,7 +131,7 @@ export type OffscreenMessage =
       audioMimeType?: string;
       settings: Settings;
     }
-  | { type: 'OFFSCREEN_CAPTURE_AUDIO'; streamId: string; durationMs: number }
+  | { type: 'OFFSCREEN_CAPTURE_AUDIO'; streamId: string; durationMs: number; includeAudio?: boolean }
   | { type: 'OFFSCREEN_PING' };
 
 export interface CaptureResult {
