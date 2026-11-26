@@ -1,24 +1,133 @@
 import { DEFAULT_SETTINGS, type Settings } from './types';
 
 const PREFIX = '[cohen]';
+const LOG_STORAGE_KEY = 'cohen:logs';
+const MAX_LOG_ENTRIES = 400;
+const FLUSH_DELAY_MS = 300;
+
+export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+
+export interface LogEntry {
+  id: string;
+  at: number;
+  level: LogLevel;
+  context: string;
+  message: string;
+}
 
 let debugEnabled = DEFAULT_SETTINGS.debugLogging;
+let sequence = 0;
+let pendingLogs: LogEntry[] = [];
+let flushTimer: ReturnType<typeof setTimeout> | null = null;
 
 export function setDebugLogging(enabled: boolean): void {
   debugEnabled = enabled;
 }
 
+function contextLabel(): string {
+  try {
+    const path = globalThis.location?.pathname ?? '';
+    const host = globalThis.location?.hostname ?? '';
+    if (path.includes('offscreen')) return 'offscreen';
+    if (path.includes('popup')) return 'popup';
+    if (path.includes('options')) return 'options';
+    if (host.includes('youtube')) return 'youtube';
+  } catch {
+    // No location in service workers.
+  }
+  return 'service-worker';
+}
+
+function serializeArg(value: unknown): string {
+  if (value instanceof Error) {
+    return value.stack || `${value.name}: ${value.message}`;
+  }
+  if (typeof value === 'string') return value;
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+}
+
+function recordLog(level: LogLevel, args: unknown[]): void {
+  const context = contextLabel();
+  sequence += 1;
+  pendingLogs.push({
+    id: `${context}-${Date.now()}-${sequence}-${Math.random().toString(36).slice(2, 8)}`,
+    at: Date.now(),
+    level,
+    context,
+    message: args.map(serializeArg).join(' '),
+  });
+  scheduleLogFlush();
+}
+
+function scheduleLogFlush(): void {
+  if (flushTimer !== null) return;
+  flushTimer = setTimeout(() => {
+    flushTimer = null;
+    void flushLogs();
+  }, FLUSH_DELAY_MS);
+}
+
+export async function flushLogs(): Promise<void> {
+  if (pendingLogs.length === 0) return;
+  const batch = pendingLogs;
+  pendingLogs = [];
+
+  try {
+    const result = await chrome.storage.local.get(LOG_STORAGE_KEY);
+    const existing = Array.isArray(result[LOG_STORAGE_KEY]) ? (result[LOG_STORAGE_KEY] as LogEntry[]) : [];
+    const ids = new Set(existing.map((entry) => entry.id));
+    const merged = [...existing, ...batch.filter((entry) => !ids.has(entry.id))]
+      .sort((a, b) => a.at - b.at)
+      .slice(-MAX_LOG_ENTRIES);
+    await chrome.storage.local.set({ [LOG_STORAGE_KEY]: merged });
+  } catch {
+    // Logging should never break extension behavior.
+  }
+}
+
+export async function getLogs(): Promise<LogEntry[]> {
+  await flushLogs();
+  try {
+    const result = await chrome.storage.local.get(LOG_STORAGE_KEY);
+    const logs = Array.isArray(result[LOG_STORAGE_KEY]) ? (result[LOG_STORAGE_KEY] as LogEntry[]) : [];
+    return logs.sort((a, b) => a.at - b.at).slice(-MAX_LOG_ENTRIES);
+  } catch {
+    return [];
+  }
+}
+
+export async function clearLogs(): Promise<void> {
+  pendingLogs = [];
+  if (flushTimer !== null) {
+    clearTimeout(flushTimer);
+    flushTimer = null;
+  }
+  try {
+    await chrome.storage.local.remove(LOG_STORAGE_KEY);
+  } catch {
+    // No-op: nothing to clear if storage is unavailable.
+  }
+}
+
 export const log = {
   debug(...args: unknown[]): void {
+    recordLog('debug', args);
     if (debugEnabled) console.debug(PREFIX, ...args);
   },
   info(...args: unknown[]): void {
+    recordLog('info', args);
     console.info(PREFIX, ...args);
   },
   warn(...args: unknown[]): void {
+    recordLog('warn', args);
     console.warn(PREFIX, ...args);
   },
   error(...args: unknown[]): void {
+    recordLog('error', args);
     console.error(PREFIX, ...args);
   },
 };
