@@ -70,7 +70,7 @@ export function mergeVerdicts(base: Verdict, model: Verdict, settings: Settings)
   let label = labelForScore(score, confidence, settings);
 
   // Do not auto-label as AI on weak confidence.
-  if (label === 'ai' && confidence < 0.55 && !hasStrongMetadataAi) label = 'uncertain';
+  if (label === 'ai' && confidence < settings.minAiConfidence && !hasStrongMetadataAi) label = 'uncertain';
 
   const reasons = dedupeStrings([...model.reasons, ...base.reasons]).slice(0, 6);
   return {

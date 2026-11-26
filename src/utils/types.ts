@@ -61,14 +61,11 @@ export interface Settings {
   autoSkipAi: boolean;
   aiThreshold: number; // score >= threshold => ai action
   uncertainThreshold: number; // below aiThreshold, >= uncertainThreshold => uncertain
-  deepScanOnDemandOnly: boolean;
-  cloudEscalation: boolean;
-  cloudEscalationMinConfidence: number; // escalate when confidence below this
+  cloudEscalation: boolean; // allow cloud fallback / audio upload
+  minAiConfidence: number; // minimum confidence before labeling a verdict AI
   cacheTtlHours: number;
   showBadge: boolean;
   debugLogging: boolean;
-  allowlistChannelIds: string[];
-  blocklistChannelIds: string[];
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -77,14 +74,11 @@ export const DEFAULT_SETTINGS: Settings = {
   autoSkipAi: false,
   aiThreshold: 70,
   uncertainThreshold: 45,
-  deepScanOnDemandOnly: true,
   cloudEscalation: false,
-  cloudEscalationMinConfidence: 0.65,
+  minAiConfidence: 0.65,
   cacheTtlHours: 24 * 7,
   showBadge: true,
   debugLogging: false,
-  allowlistChannelIds: [],
-  blocklistChannelIds: [],
 };
 
 export interface ClassificationRequest {

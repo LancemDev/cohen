@@ -119,7 +119,7 @@ export async function classifyTrack(args: {
   };
 
   // Conservative post-processing: low confidence should not be a hard AI call.
-  if (verdict.confidence < settings.cloudEscalationMinConfidence && verdict.label === 'ai') {
+  if (verdict.confidence < settings.minAiConfidence && verdict.label === 'ai') {
     verdict.label = 'uncertain';
     verdict.summary = `Uncertain: ${verdict.summary}`;
     verdict.reasons.unshift('Confidence is below the configured AI threshold; treating as uncertain.');

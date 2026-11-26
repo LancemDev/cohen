@@ -7,6 +7,7 @@ let currentMetadata: TrackMetadata | null = null;
 let currentVerdict: Verdict | null = null;
 let settings: Settings | null = null;
 let mutedByCohen = false;
+let navigationToken = 0;
 
 init().catch((err) => console.error('[cohen] init failed', err));
 
@@ -34,6 +35,12 @@ async function init(): Promise<void> {
       sendResponse({ ok: true });
       return false;
     }
+    if (message?.type === 'COHEN_REFRESH') {
+      currentVideoId = null;
+      void onNavigation();
+      sendResponse({ ok: true });
+      return false;
+    }
     return false;
   });
   void onNavigation();
@@ -42,6 +49,7 @@ async function init(): Promise<void> {
 async function onNavigation(): Promise<void> {
   const videoId = getCurrentVideoId();
   if (!videoId) {
+    navigationToken += 1;
     currentVideoId = null;
     currentMetadata = null;
     currentVerdict = null;
@@ -50,6 +58,7 @@ async function onNavigation(): Promise<void> {
     return;
   }
   if (videoId === currentVideoId) return;
+  const token = ++navigationToken;
   currentVideoId = videoId;
   currentMetadata = null;
   currentVerdict = null;
@@ -71,7 +80,7 @@ async function onNavigation(): Promise<void> {
   setBadgeLoading('Reading track metadata…');
 
   const metadata = await waitForMetadata(12000);
-  if (!metadata || metadata.videoId !== currentVideoId) return;
+  if (token !== navigationToken || !metadata || metadata.videoId !== currentVideoId) return;
   currentMetadata = metadata;
 
   setBadgeLoading('Classifying track…');
@@ -80,7 +89,7 @@ async function onNavigation(): Promise<void> {
     metadata,
   });
 
-  if (metadata.videoId !== currentVideoId) return;
+  if (token !== navigationToken || metadata.videoId !== currentVideoId) return;
   if (!response?.ok || !response.verdict) {
     setBadgeError(response?.error || 'Classification failed');
     return;
@@ -96,12 +105,16 @@ async function runDeepScan(): Promise<void> {
     setBadgeError('Wait for the track to finish loading, then try again.');
     return;
   }
+  const metadata = currentMetadata;
+  const scannedVideoId = currentVideoId;
+  const scanToken = navigationToken;
   settings = settings ?? (await requestSettings());
   setBadgeLoading('Capturing audio for deep scan…');
   const response = await sendMessage<{ ok: boolean; verdict?: Verdict; error?: string }>({
     type: 'DEEP_SCAN_WITH_METADATA',
-    metadata: currentMetadata,
+    metadata,
   });
+  if (scanToken !== navigationToken || scannedVideoId !== currentVideoId) return;
   if (!response?.ok || !response.verdict) {
     setBadgeError(response?.error || 'Deep scan failed');
     return;
