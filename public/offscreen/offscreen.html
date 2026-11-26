@@ -4,9 +4,17 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Cohen Offscreen</title>
+    <link rel="stylesheet" href="./offscreen.css" />
   </head>
   <body>
     <!-- Offscreen document for audio capture and Firebase AI Logic inference. -->
+    <main class="offscreen-panel">
+      <p class="eyebrow">Cohen</p>
+      <h1>Offscreen worker</h1>
+      <p id="cohen-offscreen-status" class="status">Waiting for messages…</p>
+      <p class="status">This page is normally invisible. Only keep it open for debugging; close it before testing classification.</p>
+      <pre id="cohen-offscreen-log" class="log">No activity yet.</pre>
+    </main>
     <script type="module" src="./offscreen.js"></script>
   </body>
 </html>
