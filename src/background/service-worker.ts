@@ -63,7 +63,7 @@ onBackgroundMessage(async (message: BackgroundMessage, sender) => {
       return { ok: true, trust };
     }
     case 'CLASSIFY_TRACK':
-      return classifyTrack(message.metadata, settings, undefined, message.forceCloud);
+      return classifyTrack(message.metadata, settings, message.audioFeatures, message.forceCloud);
     case 'DEEP_SCAN': {
       const tabId = message.tabId || sender.tab?.id;
       if (!tabId) return { ok: false, error: 'Missing tabId for deep scan' };
