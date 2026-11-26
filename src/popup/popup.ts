@@ -27,7 +27,10 @@ async function init(): Promise<void> {
     try {
       const tab = await getActiveYouTubeTab();
       if (!tab?.id) throw new Error('Open a YouTube video tab first.');
-      await chrome.tabs.sendMessage(tab.id, { type: 'COHEN_DEEP_SCAN' });
+      const res = (await chrome.tabs.sendMessage(tab.id, { type: 'COHEN_DEEP_SCAN' })) as
+        | { ok?: boolean; error?: string }
+        | undefined;
+      if (res && res.ok === false) throw new Error(res.error || 'Deep scan could not start.');
       setStatus('Deep scan started. Check the badge on the video.');
       setTimeout(() => void refreshTrack(), 2500);
       setTimeout(() => void refreshTrack(), 12000);

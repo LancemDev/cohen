@@ -26,9 +26,13 @@ async function init(): Promise<void> {
   window.addEventListener('popstate', () => void onNavigation());
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (message?.type === 'COHEN_DEEP_SCAN') {
+      if (!currentMetadata || !currentVideoId) {
+        sendResponse({ ok: false, error: 'Track metadata is still loading. Try again in a moment.' });
+        return false;
+      }
       void runDeepScan();
       sendResponse({ ok: true });
-      return true;
+      return false;
     }
     return false;
   });
@@ -88,7 +92,10 @@ async function onNavigation(): Promise<void> {
 }
 
 async function runDeepScan(): Promise<void> {
-  if (!currentMetadata || !currentVideoId) return;
+  if (!currentMetadata || !currentVideoId) {
+    setBadgeError('Wait for the track to finish loading, then try again.');
+    return;
+  }
   settings = settings ?? (await requestSettings());
   setBadgeLoading('Capturing audio for deep scan…');
   const response = await sendMessage<{ ok: boolean; verdict?: Verdict; error?: string }>({
