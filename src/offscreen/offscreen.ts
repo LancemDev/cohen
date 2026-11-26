@@ -59,7 +59,7 @@ async function handle(message: OffscreenRequest): Promise<unknown> {
 
 async function classify(message: ClassifyMessage) {
   setDebugLogging(message.settings.debugLogging);
-  log.debug('offscreen classify', message.metadata.videoId, {
+  log.info('offscreen classify', message.metadata.videoId, {
     cloud: message.settings.cloudEscalation,
     audio: Boolean(message.audioBase64),
     features: Boolean(message.audioFeatures),
@@ -76,7 +76,7 @@ async function classify(message: ClassifyMessage) {
         : undefined,
     settings: message.settings,
   });
-  log.debug(
+  log.info(
     'offscreen classify result',
     message.metadata.videoId,
     result.verdict?.label,
