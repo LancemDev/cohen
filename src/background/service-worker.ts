@@ -105,12 +105,23 @@ async function classifyTrack(
     if (isFirebaseConfigured()) {
       try {
         await ensureOffscreen();
-        const modelResult = (await chrome.runtime.sendMessage({
+        let modelResult = (await chrome.runtime.sendMessage({
           type: 'OFFSCREEN_CLASSIFY',
           metadata,
           audioFeatures,
           settings,
         })) as { ok: boolean; verdict?: Verdict; error?: string };
+        if (modelResult?.error?.includes('Unknown offscreen message')) {
+          log.warn('Stale offscreen document detected, recreating');
+          await resetOffscreen().catch(() => undefined);
+          await ensureOffscreen();
+          modelResult = (await chrome.runtime.sendMessage({
+            type: 'OFFSCREEN_CLASSIFY',
+            metadata,
+            audioFeatures,
+            settings,
+          })) as { ok: boolean; verdict?: Verdict; error?: string };
+        }
         if (modelResult?.ok && modelResult.verdict) {
           verdict = mergeVerdicts(heuristic, modelResult.verdict, settings);
         } else {
@@ -142,7 +153,18 @@ async function classifyTrack(
     return { ok: true, verdict };
   } catch (err) {
     log.error('classifyTrack failed', err);
-    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+    try {
+      const channelTrust = await getChannelTrustFor(metadata.channelId).catch(() => null);
+      const fallback = buildHeuristicVerdict(metadata, settings, audioFeatures, channelTrust);
+      fallback.reasons = [
+        ...fallback.reasons,
+        'Classification encountered an error; showing heuristic estimate.',
+      ].slice(0, 6);
+      await putVerdict(fallback, settings.cacheTtlHours).catch(() => undefined);
+      return { ok: true, verdict: fallback };
+    } catch {
+      return { ok: false, error: err instanceof Error ? err.message : String(err) };
+    }
   }
 }
 
@@ -153,13 +175,41 @@ async function deepScan(
 ): Promise<{ ok: boolean; verdict?: Verdict; error?: string }> {
   try {
     await ensureOffscreen();
-    const streamId = await chrome.tabCapture.getMediaStreamId({ targetTabId: tabId });
-    const capture = (await chrome.runtime.sendMessage({
+    let streamId: string;
+    try {
+      streamId = await chrome.tabCapture.getMediaStreamId({ targetTabId: tabId });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (/not been invoked/i.test(msg)) {
+        return {
+          ok: false,
+          error: 'Open the Cohen extension popup on this YouTube tab, then start Deep scan from the popup.',
+        };
+      }
+      if (/chrome pages cannot be captured|cannot be captured/i.test(msg)) {
+        return {
+          ok: false,
+          error: 'Chrome cannot capture audio from this page. Open a regular YouTube video tab and try again.',
+        };
+      }
+      throw err;
+    }
+    let capture = (await chrome.runtime.sendMessage({
       type: 'OFFSCREEN_CAPTURE_AUDIO',
       streamId,
       durationMs: 10000,
       includeAudio: settings.cloudEscalation,
     })) as CaptureResult;
+    if (capture?.error?.includes('Unknown offscreen message')) {
+      await resetOffscreen().catch(() => undefined);
+      await ensureOffscreen();
+      capture = (await chrome.runtime.sendMessage({
+        type: 'OFFSCREEN_CAPTURE_AUDIO',
+        streamId,
+        durationMs: 10000,
+        includeAudio: settings.cloudEscalation,
+      })) as CaptureResult;
+    }
 
     if (!capture.ok || !capture.features) {
       return { ok: false, error: capture.error || 'Audio capture failed' };
@@ -174,7 +224,7 @@ async function deepScan(
 
     let verdict = heuristic;
     if (isFirebaseConfigured()) {
-      const modelResult = (await chrome.runtime.sendMessage({
+      let modelResult = (await chrome.runtime.sendMessage({
         type: 'OFFSCREEN_CLASSIFY',
         metadata,
         audioFeatures: capture.features,
@@ -182,6 +232,18 @@ async function deepScan(
         audioMimeType: settings.cloudEscalation ? capture.mimeType : undefined,
         settings,
       })) as { ok: boolean; verdict?: Verdict; error?: string };
+      if (modelResult?.error?.includes('Unknown offscreen message')) {
+        await resetOffscreen().catch(() => undefined);
+        await ensureOffscreen();
+        modelResult = (await chrome.runtime.sendMessage({
+          type: 'OFFSCREEN_CLASSIFY',
+          metadata,
+          audioFeatures: capture.features,
+          audioBase64: settings.cloudEscalation ? capture.audioBlobBase64 : undefined,
+          audioMimeType: settings.cloudEscalation ? capture.mimeType : undefined,
+          settings,
+        })) as { ok: boolean; verdict?: Verdict; error?: string };
+      }
 
       if (modelResult?.ok && modelResult.verdict) {
         verdict = mergeVerdicts(heuristic, modelResult.verdict, settings);
@@ -218,6 +280,15 @@ async function ensureOffscreen(): Promise<void> {
     offscreenPromise = null;
   });
   return offscreenPromise;
+}
+
+async function resetOffscreen(): Promise<void> {
+  offscreenPromise = null;
+  try {
+    await chrome.offscreen.closeDocument();
+  } catch {
+    // No offscreen document to close, or it is already closing.
+  }
 }
 
 async function createOrWaitForOffscreen(): Promise<void> {
