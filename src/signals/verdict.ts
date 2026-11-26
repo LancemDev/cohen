@@ -18,9 +18,18 @@ export function buildHeuristicVerdict(
   const evidence = collectMetadataEvidence(metadata);
   if (audioFeatures) evidence.push(...audioEvidence(audioFeatures));
 
-  const score = scoreFromEvidence(evidence, audioFeatures);
-  const confidence = confidenceFromEvidence(evidence, audioFeatures);
-  const label = labelForScore(score, confidence, settings);
+  let score = scoreFromEvidence(evidence, audioFeatures);
+  let confidence = confidenceFromEvidence(evidence, audioFeatures);
+  let label = labelForScore(score, confidence, settings);
+
+  // An explicit disclosure ("made with Suno", "AI-generated", etc.) is stronger
+  // evidence than a single incidental keyword. Do not bury it under uncertainty.
+  const explicitAiDisclosure = evidence.some((e) => e.source === 'metadata' && e.weight >= 0.55);
+  if (explicitAiDisclosure && score >= settings.uncertainThreshold) {
+    confidence = Math.max(confidence, 0.7);
+    score = Math.max(score, settings.aiThreshold);
+    label = 'ai';
+  }
   const reasons = evidence
     .slice()
     .sort((a, b) => Math.abs(b.weight) - Math.abs(a.weight))
