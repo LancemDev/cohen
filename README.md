@@ -92,14 +92,19 @@ For on-device inference, enable `chrome://flags/#prompt-api-for-gemini-nano-mult
 
 ### Viewing logs
 
-1. Open Cohen options and enable **Debug logging**.
-2. Reload the extension and refresh the YouTube tab.
-3. Open the relevant DevTools console and filter for `[cohen]`:
-   - **YouTube badge/content script**: YouTube tab → DevTools → Console.
-   - **Service worker/orchestration**: `chrome://extensions` → Cohen → **Details** → **Inspect views: service worker**.
-   - **Popup**: open the popup → right-click it → **Inspect** → Console.
-   - **Options page**: open options → DevTools → Console.
-   - **Offscreen model/audio work**: if Chrome lists it, use **Inspect views** for the offscreen document; otherwise open `chrome-extension://<extension-id>/offscreen/offscreen.html` in a tab with DevTools.
+The easiest option is the in-app log viewer:
+
+1. Open the Cohen popup and click **Settings**.
+2. Scroll to **Diagnostics**.
+3. Click **Refresh logs**, then **Copy logs** to share them.
+
+You can also enable **Debug logging** in Options to include debug-only lines in DevTools, then reload the extension and refresh the YouTube tab. Open the relevant DevTools console and filter for `[cohen]`:
+
+- **YouTube badge/content script**: YouTube tab → DevTools → Console.
+- **Service worker/orchestration**: `chrome://extensions` → Cohen → **Details** → **Inspect views: service worker**.
+- **Popup**: open the popup → right-click it → **Inspect** → Console.
+- **Options page**: open options → DevTools → Console.
+- **Offscreen model/audio work**: if Chrome lists it, use **Inspect views** for the offscreen document; otherwise open `chrome-extension://<extension-id>/offscreen/offscreen.html` in a tab. The offscreen page is normally invisible; the visible panel is only for debugging, so close that tab before testing classification.
 
 Automatic classification times out after 30 seconds and deep scans after 120 seconds, so the badge should not stay in a loading state indefinitely.
 
