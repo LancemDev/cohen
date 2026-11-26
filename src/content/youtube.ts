@@ -1,5 +1,6 @@
 import { ensureBadge, removeBadge, setBadgeError, setBadgeHidden, setBadgeLoading, setBadgeVerdict } from './badge';
 import { extractTrackMetadata, getCurrentVideoId, waitForMetadata } from './metadata';
+import { log, setDebugLogging, withTimeout } from '../utils/core';
 import type { BackgroundMessage, Settings, TrackMetadata, Verdict } from '../utils/types';
 
 let currentVideoId: string | null = null;
@@ -13,10 +14,13 @@ init().catch((err) => console.error('[cohen] init failed', err));
 
 async function init(): Promise<void> {
   settings = await requestSettings();
+  setDebugLogging(settings.debugLogging);
+  log.debug('initialized');
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area === 'local' && changes.settings?.newValue) {
       const previous = settings;
       settings = changes.settings.newValue as Settings;
+      setDebugLogging(settings.debugLogging);
       if (!previous?.enabled && settings.enabled) {
         currentVideoId = null;
         void onNavigation();
@@ -90,20 +94,33 @@ async function onNavigation(): Promise<void> {
   currentMetadata = metadata;
 
   setBadgeLoading('Classifying track…');
-  const response = await sendMessage<{ ok: boolean; verdict?: Verdict; error?: string }>({
-    type: 'CLASSIFY_TRACK',
-    metadata,
-  });
+  log.debug('classification started', videoId, metadata.title);
+  try {
+    const response = await withTimeout(
+      sendMessage<{ ok: boolean; verdict?: Verdict; error?: string }>({
+        type: 'CLASSIFY_TRACK',
+        metadata,
+      }),
+      30000,
+      'Classification',
+    );
 
-  if (token !== navigationToken || metadata.videoId !== currentVideoId) return;
-  if (!response?.ok || !response.verdict) {
-    setBadgeError(response?.error || 'Classification failed');
-    return;
+    if (token !== navigationToken || metadata.videoId !== currentVideoId) return;
+    log.debug('classification response', videoId, response?.ok, response?.verdict?.label, response?.error);
+    if (!response?.ok || !response.verdict) {
+      setBadgeError(response?.error || 'Classification failed');
+      return;
+    }
+
+    currentVerdict = response.verdict;
+    if (settings) setBadgeVerdict(response.verdict, settings);
+    applyVerdictActions(response.verdict);
+  } catch (err) {
+    if (token !== navigationToken || metadata.videoId !== currentVideoId) return;
+    const message = err instanceof Error ? err.message : String(err);
+    log.warn('classification failed', videoId, message);
+    setBadgeError(message.includes('timed out') ? 'Classification timed out. Try again.' : message);
   }
-
-  currentVerdict = response.verdict;
-  if (settings) setBadgeVerdict(response.verdict, settings);
-  applyVerdictActions(response.verdict);
 }
 
 let deepScanInFlight = false;
@@ -121,11 +138,17 @@ async function runDeepScan(): Promise<void> {
   setBadgeLoading('Capturing audio for deep scan…');
   try {
     settings = settings ?? (await requestSettings());
-    const response = await sendMessage<{ ok: boolean; verdict?: Verdict; error?: string }>({
-      type: 'DEEP_SCAN_WITH_METADATA',
-      metadata,
-    });
+    log.debug('deep scan started', scannedVideoId);
+    const response = await withTimeout(
+      sendMessage<{ ok: boolean; verdict?: Verdict; error?: string }>({
+        type: 'DEEP_SCAN_WITH_METADATA',
+        metadata,
+      }),
+      120000,
+      'Deep scan',
+    );
     if (scanToken !== navigationToken || scannedVideoId !== currentVideoId) return;
+    log.debug('deep scan response', scannedVideoId, response?.ok, response?.verdict?.label, response?.error);
     if (!response?.ok || !response.verdict) {
       setBadgeError(response?.error || 'Deep scan failed');
       return;
@@ -133,6 +156,10 @@ async function runDeepScan(): Promise<void> {
     currentVerdict = response.verdict;
     if (settings) setBadgeVerdict(response.verdict, settings);
     applyVerdictActions(response.verdict);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    log.warn('deep scan failed', scannedVideoId, message);
+    setBadgeError(message.includes('timed out') ? 'Deep scan timed out. Try again.' : message);
   } finally {
     deepScanInFlight = false;
   }
@@ -209,7 +236,11 @@ function updateBadgeVisibility(): void {
 }
 
 async function requestSettings(): Promise<Settings> {
-  const response = await sendMessage<{ ok: boolean; settings: Settings }>({ type: 'GET_SETTINGS' } as BackgroundMessage);
+  const response = await withTimeout(
+    sendMessage<{ ok: boolean; settings: Settings }>({ type: 'GET_SETTINGS' } as BackgroundMessage),
+    10000,
+    'Settings request',
+  );
   return response.settings;
 }
 
