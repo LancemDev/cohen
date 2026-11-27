@@ -84,7 +84,10 @@ function renderVerdict(verdict: Verdict | null, tabTitle?: string): void {
   els.trackLabel.textContent = verdict.label.toUpperCase();
   els.trackLabel.className = `pill ${verdict.label}`;
   els.trackTitle.textContent = tabTitle?.replace(/ - YouTube$/, '') || verdict.videoId;
-  els.trackSummary.textContent = `${verdict.summary} Score ${verdict.aiScore}/100 · ${(verdict.confidence * 100).toFixed(0)}% confidence · ${verdict.source}.`;
+  const score = verdict.label === 'unverified'
+    ? 'Neutral 50/100 baseline (no evidence)'
+    : `Score ${verdict.aiScore}/100`;
+  els.trackSummary.textContent = `${verdict.summary} ${score} · ${(verdict.confidence * 100).toFixed(0)}% confidence · ${verdict.source}.`;
   for (const reason of verdict.reasons.slice(0, 4)) {
     const li = document.createElement('li');
     li.textContent = reason;

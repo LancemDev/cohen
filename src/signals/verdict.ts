@@ -1,6 +1,6 @@
 import { collectMetadataEvidence, scoreMetadataEvidence } from './metadata';
 import type { AudioFeatures, Settings, SignalEvidence, TrackMetadata, Verdict, VerdictLabel } from '../utils/types';
-import { clamp } from '../utils/core';
+import { clamp, hashString } from '../utils/core';
 
 export function buildHeuristicVerdict(
   metadata: TrackMetadata,
@@ -53,6 +53,7 @@ export function buildHeuristicVerdict(
     source: 'heuristic',
     analyzedAt: Date.now(),
     audioAnalyzed: Boolean(audioFeatures),
+    metadataFingerprint: fingerprintMetadata(metadata),
   };
 }
 
@@ -84,6 +85,7 @@ export function mergeVerdicts(base: Verdict, model: Verdict, settings: Settings)
     evidence: evidence.slice(0, 12),
     source: model.source === 'on-device' ? 'hybrid' : model.source,
     analyzedAt: Date.now(),
+    metadataFingerprint: base.metadataFingerprint,
   };
 }
 
@@ -141,7 +143,9 @@ function labelForScore(score: number, confidence: number, settings: Settings): V
 }
 
 function summaryFor(label: VerdictLabel, score: number, noEvidence: boolean): string {
-  if (noEvidence) return 'Not enough public evidence to classify this track.';
+  if (noEvidence) {
+    return 'No AI-music evidence found in metadata. This is a neutral result, not a human verdict; use Deep scan to analyze the audio.';
+  }
   if (label === 'ai') return `Likely AI-generated (score ${Math.round(score)}).`;
   if (label === 'human') return `Likely human-made (score ${Math.round(score)}).`;
   return `Uncertain provenance (score ${Math.round(score)}).`;
@@ -159,6 +163,7 @@ function trustedVerdict(metadata: TrackMetadata, reason: string): Verdict {
     source: 'user',
     analyzedAt: Date.now(),
     audioAnalyzed: false,
+    metadataFingerprint: fingerprintMetadata(metadata),
   };
 }
 
@@ -174,7 +179,21 @@ function blockedVerdict(metadata: TrackMetadata, reason: string): Verdict {
     source: 'user',
     analyzedAt: Date.now(),
     audioAnalyzed: false,
+    metadataFingerprint: fingerprintMetadata(metadata),
   };
+}
+
+export function fingerprintMetadata(metadata: TrackMetadata): string {
+  return hashString(
+    [
+      metadata.videoId,
+      metadata.title,
+      metadata.channelId,
+      metadata.channelName,
+      metadata.description,
+      metadata.keywords.join('|'),
+    ].join('\n'),
+  );
 }
 
 function dedupe(evidence: SignalEvidence[]): SignalEvidence[] {

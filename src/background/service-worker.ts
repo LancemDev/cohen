@@ -1,4 +1,4 @@
-import { buildHeuristicVerdict, mergeVerdicts } from '../signals/verdict';
+import { buildHeuristicVerdict, fingerprintMetadata, mergeVerdicts } from '../signals/verdict';
 import { isFirebaseConfigured } from '../config/firebase';
 import { log, setDebugLogging, sleep } from '../utils/core';
 import { onBackgroundMessage } from '../utils/messaging';
@@ -99,7 +99,13 @@ async function classifyTrack(
     }
 
     const cached = await getVerdict(metadata.videoId);
-    if (cached && !forceCloud && !audioFeatures && isFresh(cached, settings)) {
+    if (
+      cached &&
+      !forceCloud &&
+      !audioFeatures &&
+      isFresh(cached, settings) &&
+      cached.metadataFingerprint === fingerprintMetadata(metadata)
+    ) {
       return { ok: true, verdict: cached };
     }
 

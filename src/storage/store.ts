@@ -34,7 +34,10 @@ export async function onSettingsChanged(
 export async function getVerdict(videoId: string): Promise<Verdict | null> {
   const data = await chrome.storage.local.get(KEYS.verdicts);
   const cache = (data[KEYS.verdicts] as VerdictCache | undefined) ?? {};
-  return cache[videoId] ?? null;
+  const verdict = cache[videoId] ?? null;
+  // Verdicts created before metadata fingerprints were introduced can be
+  // paired with the wrong SPA video, so never serve them again.
+  return verdict?.metadataFingerprint ? verdict : null;
 }
 
 export async function getVerdictCache(): Promise<VerdictCache> {
@@ -86,7 +89,7 @@ export async function clearVerdictCache(): Promise<void> {
 function pruneCache(cache: VerdictCache, ttlHours: number): void {
   const cutoff = Date.now() - ttlHours * 60 * 60 * 1000;
   for (const [id, verdict] of Object.entries(cache)) {
-    if (!verdict?.analyzedAt || verdict.analyzedAt < cutoff) {
+    if (!verdict?.analyzedAt || verdict.analyzedAt < cutoff || !verdict.metadataFingerprint) {
       delete cache[id];
     }
   }

@@ -87,10 +87,11 @@ export function setBadgeVerdict(verdict: Verdict, settings: Settings): void {
   if (!badge) return;
   badge.dataset.label = verdict.label;
   setText('.cohen-sub', statusLine(verdict));
-  setText('.cohen-pill', `${verdict.aiScore}/100`);
+  setText('.cohen-pill', verdict.label === 'unverified' ? '—' : `${verdict.aiScore}/100`);
   setText('.cohen-summary', verdict.summary);
   setList(verdict.reasons);
   const meta = [
+    verdict.label === 'unverified' ? 'Neutral baseline (no evidence)' : `Score ${verdict.aiScore}/100`,
     `Confidence ${(verdict.confidence * 100).toFixed(0)}%`,
     `Source ${verdict.source}`,
     verdict.audioAnalyzed ? 'audio analyzed' : 'metadata only',

@@ -53,6 +53,8 @@ export interface Verdict {
   model?: string;
   analyzedAt: number;
   audioAnalyzed: boolean;
+  /** Identifies the metadata used for this verdict so cache entries cannot survive a metadata change. */
+  metadataFingerprint?: string;
 }
 
 export interface Settings {
