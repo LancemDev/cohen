@@ -1,10 +1,38 @@
 import type { TrackMetadata } from '../utils/types';
 
 export function getCurrentVideoId(): string | null {
-  const url = new URL(location.href);
-  if (url.pathname === '/watch') return url.searchParams.get('v');
-  if (url.pathname.startsWith('/shorts/')) return url.pathname.split('/')[2] || null;
-  return null;
+  return parseVideoId(location.href);
+}
+
+function parseVideoId(value: string): string | null {
+  try {
+    const url = new URL(value, location.origin);
+    if (url.pathname === '/watch') return url.searchParams.get('v');
+    if (url.pathname.startsWith('/shorts/')) return url.pathname.split('/')[2] || null;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function getCanonicalVideoId(): string | null {
+  // YouTube keeps these in sync with the current watch page during SPA
+  // navigation. Checking them prevents pairing a new URL with the previous
+  // video's title/description while the watch page is still updating.
+  const canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+  const canonicalId = canonical?.href ? parseVideoId(canonical.href) : null;
+  if (canonicalId) return canonicalId;
+
+  const ogUrl = document.querySelector<HTMLMetaElement>('meta[property="og:url"]');
+  return ogUrl?.content ? parseVideoId(ogUrl.content) : null;
+}
+
+function metadataMatchesCurrentPage(metadata: TrackMetadata): boolean {
+  const urlVideoId = getCurrentVideoId();
+  if (!urlVideoId || metadata.videoId !== urlVideoId) return false;
+
+  const canonicalVideoId = getCanonicalVideoId();
+  return !canonicalVideoId || canonicalVideoId === urlVideoId;
 }
 
 export function extractTrackMetadata(): TrackMetadata | null {
@@ -85,27 +113,48 @@ function detectMusicCategory(): boolean | null {
   return null;
 }
 
-export function waitForMetadata(timeoutMs = 10000): Promise<TrackMetadata | null> {
+export function waitForMetadata(timeoutMs = 12000): Promise<TrackMetadata | null> {
+  const start = Date.now();
   const existing = extractTrackMetadata();
-  if (existing?.title && existing.title !== 'YouTube') return Promise.resolve(existing);
+  let matchedAt = isUsableMetadata(existing) && metadataMatchesCurrentPage(existing) ? Date.now() : null;
+  const settleMs = 600;
 
   return new Promise((resolve) => {
-    const start = Date.now();
-    const interval = setInterval(() => {
-      const meta = extractTrackMetadata();
-      if (meta?.title && meta.title !== 'YouTube') {
-        clearInterval(interval);
-        clearTimeout(timer);
-        resolve(meta);
-      } else if (Date.now() - start > timeoutMs) {
-        clearInterval(interval);
-        clearTimeout(timer);
-        resolve(meta);
-      }
-    }, 500);
-    const timer = setTimeout(() => {
+    let finished = false;
+
+    const finish = (metadata: TrackMetadata | null): void => {
+      if (finished) return;
+      finished = true;
       clearInterval(interval);
-      resolve(extractTrackMetadata());
+      clearTimeout(timer);
+      resolve(metadata);
+    };
+
+    const check = (): void => {
+      const metadata = extractTrackMetadata();
+      const matches = isUsableMetadata(metadata) && metadataMatchesCurrentPage(metadata);
+      if (matches && matchedAt === null) matchedAt = Date.now();
+
+      if (matches && matchedAt !== null && Date.now() - matchedAt >= settleMs) {
+        finish(metadata);
+        return;
+      }
+
+      if (Date.now() - start > timeoutMs) {
+        finish(matches ? metadata : null);
+      }
+    };
+
+    const interval = setInterval(check, 250);
+    const timer = setTimeout(() => {
+      const metadata = extractTrackMetadata();
+      finish(isUsableMetadata(metadata) && metadataMatchesCurrentPage(metadata) ? metadata : null);
     }, timeoutMs);
+
+    check();
   });
+}
+
+function isUsableMetadata(metadata: TrackMetadata | null): metadata is TrackMetadata {
+  return Boolean(metadata?.title && metadata.title !== 'YouTube');
 }

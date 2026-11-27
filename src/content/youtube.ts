@@ -90,7 +90,12 @@ async function onNavigation(): Promise<void> {
   setBadgeLoading('Reading track metadata…');
 
   const metadata = await waitForMetadata(12000);
-  if (token !== navigationToken || !metadata || metadata.videoId !== currentVideoId) return;
+  if (token !== navigationToken) return;
+  if (!metadata || metadata.videoId !== currentVideoId) {
+    log.warn('metadata did not match current video', videoId, metadata?.videoId ?? 'none', metadata?.title ?? '');
+    setBadgeError('Could not read matching video metadata. Refresh the page and try again.');
+    return;
+  }
   currentMetadata = metadata;
 
   setBadgeLoading('Classifying track…');
