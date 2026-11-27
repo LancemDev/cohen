@@ -88,7 +88,7 @@ Load the unpacked extension:
 2. Enable **Developer mode**.
 3. Choose **Load unpacked** and select the `dist/` directory.
 
-For on-device inference, enable `chrome://flags/#prompt-api-for-gemini-nano-multimodal-input` and let Chrome download the model.
+For on-device inference, use a supported desktop Chrome build and check `chrome://on-device-internals`. If the model is not available, enable `chrome://flags/#optimization-guide-on-device-model` and `chrome://flags/#prompt-api-for-gemini-nano`, then restart Chrome and let the model download. Unsupported hardware will report `LanguageModel` as unavailable; use Cloud escalation for those installs.
 
 ### Viewing logs
 
@@ -134,10 +134,13 @@ Settings live in the extension's options page:
 ## Limitations
 
 - AI-music detection is probabilistic. No public, universal provenance signal exists for arbitrary audio.
+- Automatic screening reads metadata only. Undisclosed AI music often has no AI terms in its title, channel, description, or keywords, so it can legitimately come back **unverified**.
+- The neutral score for no evidence is 50, not a 50% AI probability. Cohen shows `—` for this state.
 - Heavily produced human music can look synthetic; well-produced AI music can look human.
 - YouTube's DOM changes; selectors may need maintenance.
-- On-device inference requires supported hardware and a downloaded model.
-- Tab capture requires an explicit extension invocation on the tab (opening the popup or using the badge is the intended flow).
+- On-device inference requires supported hardware and a downloaded model. The UI reports when the local model is unavailable.
+- Listening to the track is the strongest available signal. Deep scan audio analysis requires Cloud escalation because on-device Gemini Nano cannot accept audio.
+- Tab capture requires an explicit extension invocation on the tab. Opening the popup and using **Deep scan current track** is the most reliable flow.
 - The extension does not download, fingerprint, or redistribute copyrighted audio.
 
 ## License

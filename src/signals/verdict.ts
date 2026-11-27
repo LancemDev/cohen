@@ -144,7 +144,7 @@ function labelForScore(score: number, confidence: number, settings: Settings): V
 
 function summaryFor(label: VerdictLabel, score: number, noEvidence: boolean): string {
   if (noEvidence) {
-    return 'No AI-music evidence found in metadata. This is a neutral result, not a human verdict; use Deep scan to analyze the audio.';
+    return 'No AI-music evidence found in metadata. This is a neutral result, not a human verdict. Enable Cloud escalation and use Deep scan for audio analysis.';
   }
   if (label === 'ai') return `Likely AI-generated (score ${Math.round(score)}).`;
   if (label === 'human') return `Likely human-made (score ${Math.round(score)}).`;

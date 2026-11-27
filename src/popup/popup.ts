@@ -25,13 +25,18 @@ async function init(): Promise<void> {
     els.deepScan.disabled = true;
     setStatus('Running deep scan…');
     try {
+      const current = await getSettings();
       const tab = await getActiveYouTubeTab();
       if (!tab?.id) throw new Error('Open a YouTube video tab first.');
       const res = (await chrome.tabs.sendMessage(tab.id, { type: 'COHEN_DEEP_SCAN' })) as
         | { ok?: boolean; error?: string }
         | undefined;
       if (res && res.ok === false) throw new Error(res.error || 'Deep scan could not start.');
-      setStatus('Deep scan started. Check the badge on the video.');
+      setStatus(
+        current.cloudEscalation
+          ? 'Deep scan started. Check the badge on the video.'
+          : 'Deep scan started with local audio features only. Enable Cloud escalation for AI audio analysis.',
+      );
       setTimeout(() => void refreshTrack(), 2500);
       setTimeout(() => void refreshTrack(), 12000);
     } catch (err) {
